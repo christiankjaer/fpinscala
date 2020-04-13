@@ -50,19 +50,68 @@ object List { // `List` companion object. Contains functions for creating and wo
     foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
 
-  def tail[A](l: List[A]): List[A] = ???
+  def tail[A](l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case Cons(head, tail) => tail
+  }
 
-  def setHead[A](l: List[A], h: A): List[A] = ???
+  def setHead[A](l: List[A], h: A): List[A] = l match {
+    case Nil => Nil
+    case Cons(head, tail) => Cons(h, tail)
+  }
 
-  def drop[A](l: List[A], n: Int): List[A] = ???
+  def drop[A](l: List[A], n: Int): List[A] =
+    if(n <= 0) l else drop(tail(l), n - 1)
 
-  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = ???
+  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = l match {
+    case Nil => Nil
+    case Cons(head, tail) =>
+      if(f(head)) dropWhile(tail, f) else l
+  }
 
-  def init[A](l: List[A]): List[A] = ???
+  def init[A](l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case Cons(a, Cons(b, Nil)) => Cons(a, Nil)
+    case Cons(a, tail) => Cons(a, init(tail))
+  }
 
-  def length[A](l: List[A]): Int = ???
+  def length[A](l: List[A]): Int = foldRight(l, 0)((_, x) => x + 1)
 
-  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = ???
+  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = {
+    def go(xs: List[A], acc: B): B =
+      xs match {
+        case Nil => acc
+        case Cons(a, rest) => go(rest, f(acc, a))
+      }
+    go(l, z)
+  }
 
-  def map[A,B](l: List[A])(f: A => B): List[B] = ???
+
+  def map[A,B](l: List[A])(f: A => B): List[B] = l match {
+    case Nil => Nil
+    case Cons(head, tail) => Cons(f(head), map(tail)(f))
+  }
+
+  def concat[A](l: List[List[A]]): List[A] =
+    foldRight(l, Nil:List[A])((res, xs) => append(xs, res))
+
+  def filter[A](as: List[A])(f: A => Boolean): List[A] =
+    as match {
+      case Nil => Nil
+      case Cons(head, tail) => if(f(head)) Cons(head, filter(tail)(f)) else filter(tail)(f)
+    }
+
+  def flatMap[A,B](as: List[A])(f: A => List[B]): List[B] =
+    as match {
+      case Nil => Nil
+      case Cons(head, tail) => append(f(head), flatMap(tail)(f))
+    }
+
+  def zipWith[A, B, C](as: List[A], bs: List[B])(f: (A, B) => C): List[C] =
+    (as, bs) match {
+      case (Cons(a, aTail), Cons(b, bTail)) => Cons(f(a, b), zipWith(aTail, bTail)(f))
+      case (Nil, _) => Nil
+      case (_, Nil) => Nil
+    }
+
 }
